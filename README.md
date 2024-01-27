@@ -16,5 +16,9 @@ Create component from ```YiiMan\\Excel\Excel``` class
 ```
 
 ```php
-Yii::$app->excel->loadFile($excelFilePath)->freezeFirstRow()->setValue(1,2,'Hello excel');
+Yii::$app->excel
+    ->loadFile(__DIR__.'/list.xlsx')
+    ->freezeFirstRow()
+    ->setValue(1,2,'Hello excel')
+    ->write_and_get_file_path();
 ```
