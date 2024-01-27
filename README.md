@@ -1,7 +1,7 @@
 # lib-PHPExcel
 Yii2 Excel Functions and class based PHPExcel package
 ## Install
-``composer required ``
+``composer require yiiman/yii-lib-excel``
 ## Usage
 Create component from ```YiiMan\\Excel\Excel``` class
 
