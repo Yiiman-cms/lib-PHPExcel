@@ -88,7 +88,7 @@ class Excel
      */
     public function get_sheet_data():array
     {
-        return $this->activeSheet()->toArray();
+        return $this->excel->getActiveSheet()->toArray();
     }
 
     /**
