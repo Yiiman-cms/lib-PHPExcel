@@ -18,11 +18,7 @@ class Excel
     protected $excel;
     private $titles = [];
     private $Globalstyles = [];
-    private $style = [];
     private $writer;
-    private $data;
-    private $activeSheet;
-
     private $temp_path='';
 
     private $temp_file='';
@@ -44,7 +40,6 @@ class Excel
             "Excel Sheet"
         )->setCategory("Me");
         $this->excel->setActiveSheetIndex(0);
-        $this->activeSheet = $this->excel->getActiveSheet();
     }
 
     /**
@@ -64,7 +59,7 @@ class Excel
      */
     public function activeSheet():\PhpOffice\PhpSpreadsheet\Worksheet\Worksheet
     {
-        return $this->activeSheet;
+        return $this->excel->getActiveSheet();
     }
 
     /**
@@ -109,7 +104,7 @@ class Excel
      */
     public function freezeFirstRow($coordinate='A'):self
     {
-        $this->activeSheet->freezePane($coordinate);
+        $this->excel->getActiveSheet()->freezePane($coordinate);
         return $this;
     }
 
@@ -175,8 +170,8 @@ class Excel
 
             // < Orientation And Page Size >
             {
-                $this->activeSheet->getPageSetup()->setOrientation(PageSetup::ORIENTATION_LANDSCAPE);
-                $this->activeSheet->getPageSetup()->setPaperSize(PageSetup::PAPERSIZE_A4);
+                $this->excel->getActiveSheet()->getPageSetup()->setOrientation(PageSetup::ORIENTATION_LANDSCAPE);
+                $this->excel->getActiveSheet()->getPageSetup()->setPaperSize(PageSetup::PAPERSIZE_A4);
             }
             // </ Orientation And Page Size >
         }
@@ -197,7 +192,7 @@ class Excel
         foreach ($this->titles as $tkey => $title) {
             $this->setFontname(1, $tkey, 'IRANSans');
             $this->setFontSize(1, $tkey, 11);
-            $this->activeSheet
+            $this->excel->getActiveSheet()
                 ->setCellValue($this->cellNames(1, $tkey), $title);
         }
 
@@ -251,7 +246,7 @@ class Excel
         if (!empty($style_array)) {
             $this->Globalstyles = $style_array;
             foreach ($this->titles as $tkey => $title) {
-                $this->activeSheet->getStyle($this->cellNames(1, $tkey))->applyFromArray($style_array);
+                $this->excel->getActiveSheet()->getStyle($this->cellNames(1, $tkey))->applyFromArray($style_array);
             }
         }
         return $this;
@@ -305,7 +300,7 @@ class Excel
      */
     public function setStyle(int $row_number, int $column_number, array $style):self
     {
-        $this->activeSheet->getStyle($this->cellNames($row_number, $column_number))->applyFromArray($style);
+        $this->excel->getActiveSheet()->getStyle($this->cellNames($row_number, $column_number))->applyFromArray($style);
         return $this;
     }
 
@@ -318,8 +313,8 @@ class Excel
      */
     public function setHyperLink(int $row_number, int $column_number, string $url):self
     {
-        $this->activeSheet->setCellValue($this->cellNames($row_number, $column_number), $url);
-        $this->activeSheet->getCell($this->cellNames($row_number, $column_number))->getHyperlink()->setUrl($url);
+        $this->excel->getActiveSheet()->setCellValue($this->cellNames($row_number, $column_number), $url);
+        $this->excel->getActiveSheet()->getCell($this->cellNames($row_number, $column_number))->getHyperlink()->setUrl($url);
         return $this;
     }
 
@@ -331,7 +326,7 @@ class Excel
      */
     public function setFormatNumberCell(int $row_number, int $column_number):self
     {
-        $this->activeSheet->getStyle($this->cellNames($row_number, $column_number))->getNumberFormat()
+        $this->excel->getActiveSheet()->getStyle($this->cellNames($row_number, $column_number))->getNumberFormat()
             ->setFormatCode('#,##0');
         return $this;
     }
@@ -345,7 +340,7 @@ class Excel
      */
     public function setTextColor(int $row_number, int $column_number, string $color):self
     {
-        $this->activeSheet->getStyle($this->cellNames($row_number, $column_number))->applyFromArray(['font' => ['color' => ['rgb' => $color]]]);
+        $this->excel->getActiveSheet()->getStyle($this->cellNames($row_number, $column_number))->applyFromArray(['font' => ['color' => ['rgb' => $color]]]);
         return $this;
     }
 
@@ -357,7 +352,7 @@ class Excel
      */
     public function setTextBold(int $row_number, int $column_number):self
     {
-        $this->activeSheet->getStyle($this->cellNames($row_number, $column_number))->applyFromArray(['font' => ['bold' => true]]);
+        $this->excel->getActiveSheet()->getStyle($this->cellNames($row_number, $column_number))->applyFromArray(['font' => ['bold' => true]]);
         return $this;
     }
 
@@ -369,7 +364,7 @@ class Excel
      */
     public function setTextItalic(int $row_number, int $column_number):self
     {
-        $this->activeSheet->getStyle($this->cellNames($row_number, $column_number))->applyFromArray(['font' => ['italic' => true]]);
+        $this->excel->getActiveSheet()->getStyle($this->cellNames($row_number, $column_number))->applyFromArray(['font' => ['italic' => true]]);
         return $this;
     }
 
@@ -381,7 +376,7 @@ class Excel
      */
     public function setTextUnderline(int $row_number, int $column_number):self
     {
-        $this->activeSheet->getStyle($this->cellNames($row_number, $column_number))->applyFromArray(['font' => ['underline' => true]]);
+        $this->excel->getActiveSheet()->getStyle($this->cellNames($row_number, $column_number))->applyFromArray(['font' => ['underline' => true]]);
         return $this;
     }
 
@@ -394,7 +389,7 @@ class Excel
      */
     public function setLockCell(int $row_number, int $column_number):self
     {
-        $this->activeSheet->getStyle($this->cellNames($row_number, $column_number))->getProtection()->setLocked(
+        $this->excel->getActiveSheet()->getStyle($this->cellNames($row_number, $column_number))->getProtection()->setLocked(
             Protection::PROTECTION_PROTECTED
         );
         return $this;
@@ -410,7 +405,7 @@ class Excel
     public function setFillColor(int $row_number, int $column_number, string $color):self
     {
 
-        $this->activeSheet->getStyle($this->cellNames($row_number, $column_number))->applyFromArray(['fill' => ['color' => ['rgb' => $color], 'type' => Fill::FILL_SOLID]]);
+        $this->excel->getActiveSheet()->getStyle($this->cellNames($row_number, $column_number))->applyFromArray(['fill' => ['color' => ['rgb' => $color], 'type' => Fill::FILL_SOLID]]);
         return $this;
     }
 
@@ -422,7 +417,7 @@ class Excel
     public function hideColumns(array $columns_names):self
     {
         foreach ($columns_names as $column_name) {
-            $this->activeSheet->getColumnDimension($column_name)->setVisible(false);
+            $this->excel->getActiveSheet()->getColumnDimension($column_name)->setVisible(false);
         }
         return $this;
     }
@@ -433,7 +428,7 @@ class Excel
      */
     public function isRTL():self
     {
-        $this->activeSheet
+        $this->excel->getActiveSheet()
             ->setRightToLeft(true);
         return $this;
     }
@@ -458,7 +453,7 @@ class Excel
 
 //        $objRichText->createText(', unless specified otherwise on the invoice.');
 
-        $this->activeSheet->getCell($this->cellNames($row_number, $column_number))->setValue($objRichText);
+        $this->excel->getActiveSheet()->getCell($this->cellNames($row_number, $column_number))->setValue($objRichText);
         return $this;
     }
 
@@ -470,9 +465,9 @@ class Excel
     {
         foreach ($columns as $columnName => $width) {
             if (is_bool($width)) {
-                $this->activeSheet->getColumnDimension($columnName)->setAutoSize(true);
+                $this->excel->getActiveSheet()->getColumnDimension($columnName)->setAutoSize(true);
             } else {
-                $this->activeSheet->getColumnDimension($columnName)->setWidth($width);
+                $this->excel->getActiveSheet()->getColumnDimension($columnName)->setWidth($width);
             }
         }
         return $this;
@@ -489,12 +484,12 @@ class Excel
     {
         $this->setFontname($row_number, $column_number, 'IRANSans');
         $this->setFontSize($row_number, $column_number, 11);
-        $this->activeSheet->setCellValue(
+        $this->excel->getActiveSheet()->setCellValue(
             $this->cellNames($row_number, $column_number),
             $value
         );
         if (!empty($this->Globalstyles)) {
-            $this->activeSheet->getStyle($this->cellNames($row_number, $column_number))->applyFromArray($this->Globalstyles);
+            $this->excel->getActiveSheet()->getStyle($this->cellNames($row_number, $column_number))->applyFromArray($this->Globalstyles);
         }
         return $this;
     }
@@ -508,7 +503,7 @@ class Excel
      */
     public function setFontname($row_number,$column_number,$fontName):self
     {
-        $this->activeSheet->getStyle($this->cellNames($row_number, $column_number))->applyFromArray(['font' => ['name' => 'IRANSans']]);
+        $this->excel->getActiveSheet()->getStyle($this->cellNames($row_number, $column_number))->applyFromArray(['font' => ['name' => 'IRANSans']]);
         return $this;
     }
 
@@ -520,7 +515,7 @@ class Excel
      * @return self
      */
     public function setFontSize($row_number,$column_number,$font_size=11):self{
-        $this->activeSheet->getStyle($this->cellNames($row_number, $column_number))->applyFromArray(['font' => ['size' => $font_size]]);
+        $this->excel->getActiveSheet()->getStyle($this->cellNames($row_number, $column_number))->applyFromArray(['font' => ['size' => $font_size]]);
         return $this;
     }
 
@@ -548,8 +543,8 @@ class Excel
      */
     public function download($file_name = 'excel.xls', $title = 'excel file')
     {
-
-        $this->activeSheet->setTitle($title);
+        
+        $this->excel->getActiveSheet()->setTitle($title);
 //										PHPExcel_Settings::setZipClass(PHPExcel_Settings::PCLZIP);
         $this->writer->save(
             $this->temp_file_path(). '.xls'
