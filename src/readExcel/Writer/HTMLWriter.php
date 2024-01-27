@@ -1,14 +1,14 @@
 <?php
 
-namespace system\lib\readExcel\Writer;
+namespace YiiMan\YiiLibExcel\readExcel\Writer;
 
 /**
- * SimpleExcel class for writing table as JSON
+ * SimpleExcel class for writing HTML table
  *  
  * @author  Faisalman
  * @package SimpleExcel
  */
-class JSONWriter extends BaseWriter implements IWriter
+class HTMLWriter extends BaseWriter implements IWriter
 {
     /**
      * Defines content-type for HTTP header
@@ -16,7 +16,7 @@ class JSONWriter extends BaseWriter implements IWriter
      * @access  protected
      * @var     string
      */
-    protected $content_type = 'application/json';
+    protected $content_type = 'text/html';
 
     /**
      * Defines file extension to be used when saving file
@@ -24,7 +24,7 @@ class JSONWriter extends BaseWriter implements IWriter
      * @access  protected
      * @var     string
      */
-    protected $file_extension = 'json';
+    protected $file_extension = 'html';
     
     /**
      * Get document content as string
@@ -32,15 +32,15 @@ class JSONWriter extends BaseWriter implements IWriter
      * @return  string  Content of document
      */
     public function saveString(){
-        $json = array();
+        $content = '<table>';
         foreach ($this->tabl_data as $row) {
-            $row_array = array();
-            for ($i = 0; $i < count($row); $i++) {
-                $row_array[$i] = $row[$i];
+            $content .= '<tr>';
+            foreach ($row as $cell) {
+                $content .= '<td>'.$cell.'</td>';
             }
-            array_push($json, (object)$row);
+            $content .= '</tr>';
         }
-        return json_encode($json);
+        return $content.'</table>';
     }
 }
 ?>

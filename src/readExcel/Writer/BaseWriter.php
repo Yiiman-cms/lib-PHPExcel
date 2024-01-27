@@ -1,6 +1,6 @@
 <?php
 
-namespace system\lib\readExcel\Writer;
+namespace YiiMan\YiiLibExcel\readExcel\Writer;
 
 /**
  * SimpleExcel base class for writing spreadsheet

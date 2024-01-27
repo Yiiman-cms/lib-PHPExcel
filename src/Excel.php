@@ -1,7 +1,7 @@
 <?php
 
 
-namespace system\lib;
+namespace YiiMan\YiiLibExcel;
 
 
 class Excel
@@ -20,7 +20,7 @@ class Excel
         ini_set('memory_limit', '-1');
         set_time_limit(0);
         ini_set('max_execution_time', 0);
-        include_once __DIR__ . '/../../crm_include/lib/PHPExcel.php';
+        include_once __DIR__ . '/PHPExcel.php';
         $this->excel = $objPHPExcel = new \PHPExcel();
 
         $this->writer = \PHPExcel_IOFactory::createWriter($this->excel, 'Excel5');
@@ -35,14 +35,17 @@ class Excel
         $this->activeSheet = $this->excel->getActiveSheet();
     }
 
-    public function loadFile($post_field_name)
+    /**
+     * load excel file
+     * @param $path
+     * @return array
+     * @throws \PHPExcel_Exception
+     * @throws \PHPExcel_Reader_Exception
+     */
+    public function loadFile($path)
     {
-        if (!empty($_FILES[$post_field_name])) {
-           $move= move_uploaded_file($_FILES[$post_field_name]['tmp_name'], __DIR__ . '/excel.xls');
-
-        }
         /** Load $inputFileName to a PHPExcel Object  **/
-        $this->excel = \PHPExcel_IOFactory::load(__DIR__ . '/excel.xls');
+        $this->excel = \PHPExcel_IOFactory::load($path);
 //        unlink(__DIR__ . '/excel.xls');
         return $this->excel->getActiveSheet()->toArray();
     }
@@ -368,10 +371,10 @@ class Excel
         $this->activeSheet->setTitle($title);
 //										PHPExcel_Settings::setZipClass(PHPExcel_Settings::PCLZIP);
         $this->writer->save(
-            __DIR__ . '/' . $file_name . '.xls'
+            __DIR__ . 'Excel.php/' . $file_name . '.xls'
         );
 
-        $file = __DIR__ . '/' . $file_name . '.xls';
+        $file = __DIR__ . 'Excel.php/' . $file_name . '.xls';
 
         header("Content-Description: File Transfer");
         header("Content-Type: application/octet-stream");

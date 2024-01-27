@@ -1,6 +1,6 @@
 <?php
  
-namespace system\lib\readExcel\Parser;
+namespace YiiMan\YiiLibExcel\readExcel\Parser;
 
 /**
  * Defines SimpleExcel parser interface

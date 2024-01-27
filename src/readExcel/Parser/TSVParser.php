@@ -1,6 +1,6 @@
 <?php
  
-namespace system\lib\readExcel\Parser;
+namespace YiiMan\YiiLibExcel\readExcel\Parser;
 
 /**
  * SimpleExcel class for parsing Microsoft Excel TSV Spreadsheet

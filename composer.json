@@ -1,0 +1,23 @@
+{
+    "name": "yiiman/yii-lib-excel",
+    "description": "Simple library for parse and manipulate excel files",
+    "type": "yii2-extension",
+    "license": "BSD-3-Clause",
+    "autoload": {
+        "psr-4": {
+            "YiiMan\\YiiLibExcel\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "yiiman-dev",
+            "email": "amintado@gmail.com"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {
+        "php": "^8.2",
+        "ext-zip": "*",
+        "ext-xml": "*"
+    }
+}

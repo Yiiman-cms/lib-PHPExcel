@@ -33,16 +33,16 @@
  * @version     0.3.15
  */
 
-namespace system\lib\readExcel;
+namespace YiiMan\YiiLibExcel\readExcel;
 
-use system\lib\readExcel\Exception\SimpleExcelException;
-use system\lib\readExcel\Parser\CSVParser;
-use system\lib\readExcel\Writer\CSVWriter;
+use YiiMan\YiiLibExcel\readExcel\Exception\SimpleExcelException;
+use YiiMan\YiiLibExcel\readExcel\Parser\CSVParser;
+use YiiMan\YiiLibExcel\readExcel\Writer\CSVWriter;
 
 if (!class_exists('Composer\\Autoload\\ClassLoader', false)){
     // autoload all interfaces & classes
     spl_autoload_register(function($class_name){
-        if($class_name != 'SimpleExcel') require_once(dirname(__FILE__).DIRECTORY_SEPARATOR.str_replace('\\', DIRECTORY_SEPARATOR, substr($class_name, strlen('system\lib\readExcel\\'))).'.php');
+        if($class_name != 'SimpleExcel') require_once(dirname(__FILE__).DIRECTORY_SEPARATOR.str_replace('\\', DIRECTORY_SEPARATOR, substr($class_name, strlen('YiiMan\YiiLibExcel\readExcel\\'))).'.php');
     });
 }
 
@@ -95,7 +95,7 @@ class SimpleExcel
         if(!in_array($filetype, $this->validParserTypes)){
             throw new \Exception('Filetype '.$filetype.' is not supported', SimpleExcelException::FILETYPE_NOT_SUPPORTED);
         }
-        $parser_class = 'system\lib\readExcel\\Parser\\'.$filetype.'Parser';
+        $parser_class = 'YiiMan\YiiLibExcel\readExcel\\Parser\\'.$filetype.'Parser';
         $this->parser = new $parser_class();
     }
 
@@ -112,7 +112,7 @@ class SimpleExcel
         if(!in_array($filetype, $this->validWriterTypes)){
             throw new \Exception('Filetype '.$filetype.' is not supported', SimpleExcelException::FILETYPE_NOT_SUPPORTED);
         }
-        $writer_class = 'system\lib\readExcel\\Writer\\'.$filetype.'Writer';
+        $writer_class = 'YiiMan\YiiLibExcel\readExcel\\Writer\\'.$filetype.'Writer';
         $this->writer = new $writer_class();
     }
     

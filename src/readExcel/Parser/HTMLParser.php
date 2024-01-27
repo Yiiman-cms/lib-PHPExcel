@@ -1,8 +1,8 @@
 <?php
 
-namespace system\lib\readExcel\Parser;
+namespace YiiMan\YiiLibExcel\readExcel\Parser;
 
-use system\lib\readExcel\Exception\SimpleExcelException;
+use YiiMan\YiiLibExcel\readExcel\Exception\SimpleExcelException;
 
 /**
  * SimpleExcel class for parsing HTML table

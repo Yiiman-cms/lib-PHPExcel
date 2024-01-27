@@ -1,6 +1,6 @@
 <?php
 
-namespace system\lib\readExcel\Exception;
+namespace YiiMan\YiiLibExcel\readExcel\Exception;
 
 /**
  * Defines SimpleExcel exception enum
