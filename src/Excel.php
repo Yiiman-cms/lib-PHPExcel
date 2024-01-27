@@ -3,7 +3,16 @@
 
 namespace YiiMan\YiiLibExcel;
 
-
+use PhpOffice\PhpSpreadsheet\Collection\Memory\SimpleCache1;
+use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\RichText\RichText;
+use PhpOffice\PhpSpreadsheet\Settings;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Style\Color;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Style\Protection;
+use PhpOffice\PhpSpreadsheet\Worksheet\PageSetup;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 class Excel
 {
     protected $excel;
@@ -14,16 +23,19 @@ class Excel
     private $data;
     private $activeSheet;
 
+    private $temp_path='';
+
+    private $temp_file='';
+
     public function __construct()
     {
 //        ignore_user_abort(true);
         ini_set('memory_limit', '-1');
         set_time_limit(0);
         ini_set('max_execution_time', 0);
-        include_once __DIR__ . '/PHPExcel.php';
-        $this->excel = $objPHPExcel = new \PHPExcel();
-
-        $this->writer = \PHPExcel_IOFactory::createWriter($this->excel, 'Excel5');
+        $this->temp_path=sys_get_temp_dir();
+        $this->excel = new Spreadsheet();
+        $this->writer = IOFactory::createWriter($this->excel, IOFactory::WRITER_XLSX);
         $this->excel->getProperties()->setCreator("Me")->setLastModifiedBy(
             "Me"
         )->setTitle(
@@ -36,32 +48,78 @@ class Excel
     }
 
     /**
-     * load excel file
-     * @param $path
-     * @return array
-     * @throws \PHPExcel_Exception
-     * @throws \PHPExcel_Reader_Exception
+     * Set active sheet (default is 0)
+     * @param $index
+     * @return $this
      */
-    public function loadFile($path)
+    public function  set_active_sheet($index=0)
     {
-        /** Load $inputFileName to a PHPExcel Object  **/
-        $this->excel = \PHPExcel_IOFactory::load($path);
-//        unlink(__DIR__ . '/excel.xls');
-        return $this->excel->getActiveSheet()->toArray();
-    }
-
-    public function freezFirstRow()
-    {
-        $this->activeSheet->freezePaneByColumnAndRow();
+        $this->excel->setActiveSheetIndex($index);
+        return $this;
     }
 
     /**
-     * give cell and row number and return charachtred cell num just like excel
+     * Get active sheet
+     * @return \PhpOffice\PhpSpreadsheet\Worksheet\Worksheet
+     */
+    public function activeSheet():\PhpOffice\PhpSpreadsheet\Worksheet\Worksheet
+    {
+        return $this->activeSheet;
+    }
+
+    /**
+     * generate unique temp file path for write files
+     * @return string
+     */
+    private function temp_file_path(): string
+    {
+        if (empty($this->temp_file)){
+            $temp_file_path=tempnam($this->temp_path, 'prefix_'.uniqid().'_');
+            $this->temp_file=$temp_file_path;
+            return $temp_file_path;
+        }else{
+            return $this->temp_file;
+        }
+    }
+
+    /**
+     * get active sheet data as array
+     * @return array
+     */
+    public function get_sheet_data():array
+    {
+        return $this->activeSheet()->toArray();
+    }
+
+    /**
+     * load excel file
+     * @param $path
+     * @return self
+     */
+    public function loadFile($path):self
+    {
+        /** Load $inputFileName to a PHPExcel Object  **/
+        $this->excel = IOFactory::load($path);
+        return $this;
+    }
+
+    /**
+     * @param $coordinate
+     * @return $this
+     */
+    public function freezeFirstRow($coordinate='A'):self
+    {
+        $this->activeSheet->freezePane($coordinate);
+        return $this;
+    }
+
+    /**
+     * give cell and row number and return Name of cell num just like excel
      * @param $row_number
      * @param $cell_number
      * @return string
      */
-    protected function cellNames($row_number, $cell_number)
+    protected function cellNames($row_number, $cell_number):string
     {
         $char_array =
             [
@@ -104,21 +162,21 @@ class Excel
         {
             // < Set Cache Mode >
             {
-                $cacheMethod = \PHPExcel_CachedObjectStorageFactory::cache_to_phpTemp;
-                \PHPExcel_Settings::setCacheStorageMethod($cacheMethod, ['memoryCacheSize' => '8MB']);
+                $cache=new SimpleCache1();
+                Settings::setCache($cache);
             }
             // </ Set Cache Mode >
 
             // < Set Language >
             {
-                \PHPExcel_Settings::setLocale('fa_ir');
+                Settings::setLocale('fa_ir');
             }
             // </ Set Language >
 
             // < Orientation And Page Size >
             {
-                $this->activeSheet->getPageSetup()->setOrientation(\PHPExcel_Worksheet_PageSetup::ORIENTATION_LANDSCAPE);
-                $this->activeSheet->getPageSetup()->setPaperSize(\PHPExcel_Worksheet_PageSetup::PAPERSIZE_A4);
+                $this->activeSheet->getPageSetup()->setOrientation(PageSetup::ORIENTATION_LANDSCAPE);
+                $this->activeSheet->getPageSetup()->setPaperSize(PageSetup::PAPERSIZE_A4);
             }
             // </ Orientation And Page Size >
         }
@@ -130,8 +188,9 @@ class Excel
      * will Set Excel First Row As Header Titles
      *
      * @param array $titles ['title1','title2', ...]
+     * @return self
      */
-    public function setHeaders(array $titles)
+    public function setHeaders(array $titles):self
     {
         $this->titles = $titles;
 
@@ -143,14 +202,51 @@ class Excel
         }
 
         $this->excel->getActiveSheet()->setAutoFilter('A1:'.$this->cellNames(1, count($this->titles)-1));
+        return $this;
     }
 
     /**
-     * Will Set Style For Cells and Title Rows
+     * Will Set Array of Styles For Cells and Title Rows
+     * <code>
+     * $spreadsheet->getActiveSheet()->getStyle('B2')->applyFromArray(
+     * [
+     * 'font' => [
+     *      'name' => 'Arial',
+     *      'bold' => true,
+     *      'italic' => false,
+     *      'underline' => Font::UNDERLINE_DOUBLE,
+     *      'strikethrough' => false,
+     * 'color' => [
+     *       'rgb' => '808080'
+     * ]
+     * ],
+     * 'borders' => [
+     *      'bottom' => [
+     *          'borderStyle' => Border::BORDER_DASHDOT,
+     *           'color' => [
+     *                'rgb' => '808080'
+     *          ]
+     *      ],
+     *      'top' => [
+     *            'borderStyle' => Border::BORDER_DASHDOT,
+     *            'color' => [
+     *                'rgb' => '808080'
+     *               ]
+     *      ]
+     * ],
+     * 'alignment' => [
+     *          'horizontal' => Alignment::HORIZONTAL_CENTER,
+     *          'vertical' => Alignment::VERTICAL_CENTER,
+     *          'wrapText' => true,
+     *      ],
+     *      'quotePrefix'    => true
+     * ]
+     * );
+     * </code>
      * @param array $style_array
-     * @throws \PHPExcel_Exception
+     * @return self
      */
-    public function setGlobalStyles(array $style_array)
+    public function setGlobalStyles(array $style_array):self
     {
         if (!empty($style_array)) {
             $this->Globalstyles = $style_array;
@@ -158,91 +254,135 @@ class Excel
                 $this->activeSheet->getStyle($this->cellNames(1, $tkey))->applyFromArray($style_array);
             }
         }
+        return $this;
     }
 
     /**
      * set style on single cell
+     * <code>
+     * $spreadsheet->getActiveSheet()->getStyle('B2')->applyFromArray(
+     * [
+     * 'font' => [
+     *      'name' => 'Arial',
+     *      'bold' => true,
+     *      'italic' => false,
+     *      'underline' => Font::UNDERLINE_DOUBLE,
+     *      'strikethrough' => false,
+     * 'color' => [
+     *       'rgb' => '808080'
+     * ]
+     * ],
+     * 'borders' => [
+     *      'bottom' => [
+     *          'borderStyle' => Border::BORDER_DASHDOT,
+     *           'color' => [
+     *                'rgb' => '808080'
+     *          ]
+     *      ],
+     *      'top' => [
+     *            'borderStyle' => Border::BORDER_DASHDOT,
+     *            'color' => [
+     *                'rgb' => '808080'
+     *               ]
+     *      ]
+     * ],
+     * 'alignment' => [
+     *          'horizontal' => Alignment::HORIZONTAL_CENTER,
+     *          'vertical' => Alignment::VERTICAL_CENTER,
+     *          'wrapText' => true,
+     *      ],
+     *      'quotePrefix'    => true
+     * ]
+     * );
+     * </code>
+     *
      * @param int $row_number
      * @param int $column_number
      * @param array $style
-     * @throws \PHPExcel_Exception
+     *
+
+     * @return self
      */
-    public function setStyle(int $row_number, int $column_number, array $style)
+    public function setStyle(int $row_number, int $column_number, array $style):self
     {
         $this->activeSheet->getStyle($this->cellNames($row_number, $column_number))->applyFromArray($style);
-
+        return $this;
     }
 
     /**
-     * set an Cell Hyperlink
+     * set a Cell Hyperlink
      * @param int $row_number
      * @param int $column_number
      * @param string $url
-     * @throws \PHPExcel_Exception
+     * @return self
      */
-    public function setHyperLink(int $row_number, int $column_number, string $url)
+    public function setHyperLink(int $row_number, int $column_number, string $url):self
     {
         $this->activeSheet->setCellValue($this->cellNames($row_number, $column_number), $url);
         $this->activeSheet->getCell($this->cellNames($row_number, $column_number))->getHyperlink()->setUrl($url);
-
+        return $this;
     }
 
     /**
-     * format an cell as separated number
+     * format a cell as separated number
      * @param int $row_number
      * @param int $column_number
-     * @throws \PHPExcel_Exception
+     * @return self
      */
-    public function setFormatNumberCell(int $row_number, int $column_number)
+    public function setFormatNumberCell(int $row_number, int $column_number):self
     {
         $this->activeSheet->getStyle($this->cellNames($row_number, $column_number))->getNumberFormat()
             ->setFormatCode('#,##0');
-
+        return $this;
     }
 
     /**
      * set Cell Text Color
      * @param int $row_number
      * @param int $column_number
-     * @param string $color color in hex without #
-     * @throws \PHPExcel_Exception
+     * @param string $color like FF000000 ,You can use Color::Color_constants
+     * @return self
      */
-    public function setTextColor(int $row_number, int $column_number, string $color)
+    public function setTextColor(int $row_number, int $column_number, string $color):self
     {
         $this->activeSheet->getStyle($this->cellNames($row_number, $column_number))->applyFromArray(['font' => ['color' => ['rgb' => $color]]]);
+        return $this;
     }
 
     /**
      * set Cell Text Bold
      * @param int $row_number
      * @param int $column_number
-     * @throws \PHPExcel_Exception
+     * @return self
      */
-    public function setTextBold(int $row_number, int $column_number)
+    public function setTextBold(int $row_number, int $column_number):self
     {
         $this->activeSheet->getStyle($this->cellNames($row_number, $column_number))->applyFromArray(['font' => ['bold' => true]]);
+        return $this;
     }
 
     /**
      * set Cell Text Italic
      * @param int $row_number
      * @param int $column_number
-     * @throws \PHPExcel_Exception
+     * @return self
      */
-    public function setTextItalic(int $row_number, int $column_number)
+    public function setTextItalic(int $row_number, int $column_number):self
     {
         $this->activeSheet->getStyle($this->cellNames($row_number, $column_number))->applyFromArray(['font' => ['italic' => true]]);
+        return $this;
     }
 
     /**
      * set Cell Text Underline
      * @param int $row_number
      * @param int $column_number
-     * @throws \PHPExcel_Exception
+     * @return self
      */
-    public function setTextUnderline(int $row_number, int $column_number)
+    public function setTextUnderline(int $row_number, int $column_number):self
     {
         $this->activeSheet->getStyle($this->cellNames($row_number, $column_number))->applyFromArray(['font' => ['underline' => true]]);
+        return $this;
     }
 
 
@@ -250,44 +390,52 @@ class Excel
      * this function will lock your cell for prevent from edit
      * @param int $row_number
      * @param int $column_number
+     * @return self
      */
-    public function setLockCell(int $row_number, int $column_number)
+    public function setLockCell(int $row_number, int $column_number):self
     {
         $this->activeSheet->getStyle($this->cellNames($row_number, $column_number))->getProtection()->setLocked(
-            \PHPExcel_Style_Protection::PROTECTION_PROTECTED
+            Protection::PROTECTION_PROTECTED
         );
+        return $this;
     }
 
     /**
      * set cell fill color in hex(rgb) mode
      * @param int $row_number
      * @param int $column_number
-     * @param string $color hex color without #
-     * @throws \PHPExcel_Exception
+     * @param string $color like FF000000 ,You can use Color::Color_constants
+     * @return self
      */
-    public function setFillColor(int $row_number, int $column_number, string $color)
+    public function setFillColor(int $row_number, int $column_number, string $color):self
     {
-        $this->activeSheet->getStyle($this->cellNames($row_number, $column_number))->applyFromArray(['fill' => ['color' => ['rgb' => $color], 'type' => \PHPExcel_Style_Fill::FILL_SOLID]]);
 
+        $this->activeSheet->getStyle($this->cellNames($row_number, $column_number))->applyFromArray(['fill' => ['color' => ['rgb' => $color], 'type' => Fill::FILL_SOLID]]);
+        return $this;
     }
 
     /**
      * this function will hide array of columns
-     * @param array $columns_name
-     * @throws \PHPExcel_Exception
+     * @param array $columns_names
+     * @return self
      */
-    public function hideColumns(array $columns_names)
+    public function hideColumns(array $columns_names):self
     {
         foreach ($columns_names as $column_name) {
             $this->activeSheet->getColumnDimension($column_name)->setVisible(false);
         }
+        return $this;
     }
 
-    public function isRTL()
+    /**
+     * Set excel Sheet as RTL
+     * @return $this
+     */
+    public function isRTL():self
     {
         $this->activeSheet
             ->setRightToLeft(true);
-
+        return $this;
     }
 
     /**
@@ -295,30 +443,30 @@ class Excel
      * @param int $row_number
      * @param int $column_number
      * @param string $text
-     * @param string $color color in hex(ARGB) format without #
-     * @throws \PHPExcel_Exception
+     * @param string $color like FF000000 ,You can use Color::Color_constants
+     * @return self
      */
-    public function RichText(int $row_number, int $column_number, string $text, string $color)
+    public function RichText(int $row_number, int $column_number, string $text, string $color):self
     {
-        $objRichText = new \PHPExcel_RichText();
+        $objRichText = new RichText();
 //        $objRichText->createText('This invoice is ');
 
         $objPayable = $objRichText->createTextRun($text);
         $objPayable->getFont()->setBold(true);
         $objPayable->getFont()->setItalic(true);
-        $objPayable->getFont()->setColor(new \PHPExcel_Style_Color($color));
+        $objPayable->getFont()->setColor(new Color($color));
 
 //        $objRichText->createText(', unless specified otherwise on the invoice.');
 
         $this->activeSheet->getCell($this->cellNames($row_number, $column_number))->setValue($objRichText);
-
+        return $this;
     }
 
     /**
      * @param array $columns
-     * @throws \PHPExcel_Exception
+     * @return self
      */
-    public function setColumnsWidth(array $columns)
+    public function setColumnsWidth(array $columns):self
     {
         foreach ($columns as $columnName => $width) {
             if (is_bool($width)) {
@@ -327,9 +475,17 @@ class Excel
                 $this->activeSheet->getColumnDimension($columnName)->setWidth($width);
             }
         }
+        return $this;
     }
 
-    public function setValue(int $row_number, int $column_number, $value)
+    /**
+     * Set a value on activated sheet cell
+     * @param int $row_number
+     * @param int $column_number
+     * @param $value
+     * @return $this
+     */
+    public function setValue(int $row_number, int $column_number, $value):self
     {
         $this->setFontname($row_number, $column_number, 'IRANSans');
         $this->setFontSize($row_number, $column_number, 11);
@@ -340,6 +496,7 @@ class Excel
         if (!empty($this->Globalstyles)) {
             $this->activeSheet->getStyle($this->cellNames($row_number, $column_number))->applyFromArray($this->Globalstyles);
         }
+        return $this;
     }
 
     /**
@@ -347,11 +504,12 @@ class Excel
      * @param $row_number
      * @param $column_number
      * @param $fontName
-     * @throws \PHPExcel_Exception
+     * @return self
      */
-    public function setFontname($row_number,$column_number,$fontName)
+    public function setFontname($row_number,$column_number,$fontName):self
     {
         $this->activeSheet->getStyle($this->cellNames($row_number, $column_number))->applyFromArray(['font' => ['name' => 'IRANSans']]);
+        return $this;
     }
 
     /**
@@ -359,28 +517,52 @@ class Excel
      * @param $row_number
      * @param $column_number
      * @param $font_size
-     * @throws \PHPExcel_Exception
+     * @return self
      */
-    public function setFontSize($row_number,$column_number,$font_size){
-        $this->activeSheet->getStyle($this->cellNames($row_number, $column_number))->applyFromArray(['font' => ['size' => 11]]);
+    public function setFontSize($row_number,$column_number,$font_size=11):self{
+        $this->activeSheet->getStyle($this->cellNames($row_number, $column_number))->applyFromArray(['font' => ['size' => $font_size]]);
+        return $this;
     }
 
-    public function execute($file_name = 'excel', $title = 'excel file')
+    /**
+     * Write latest changes and get file path
+     *
+     * Please delete file after do some things
+     *
+     * @return string
+     */
+    public function write_and_get_file_path():string
+    {
+        $this->writer->save(
+            $this->temp_file_path(). '.xls'
+        );
+        return $this->temp_file_path(). '.xls';
+    }
+
+
+    /**
+     * Write changes on temp file and start download on client browser
+     * @param $file_name
+     * @param $title
+     * @return mixed
+     */
+    public function download($file_name = 'excel.xls', $title = 'excel file')
     {
 
         $this->activeSheet->setTitle($title);
 //										PHPExcel_Settings::setZipClass(PHPExcel_Settings::PCLZIP);
         $this->writer->save(
-            __DIR__ . 'Excel.php/' . $file_name . '.xls'
+            $this->temp_file_path(). '.xls'
         );
 
-        $file = __DIR__ . 'Excel.php/' . $file_name . '.xls';
+        $file = $this->temp_file_path() . '.xls';
 
         header("Content-Description: File Transfer");
         header("Content-Type: application/octet-stream");
-        header("Content-Disposition: attachment; filename=\"" . basename($file) . "\"");
+        header("Content-Disposition: attachment; filename=\"" . basename($file_name) . "\"");
 
         readfile($file);
+        unset($file);
         exit();
     }
 }

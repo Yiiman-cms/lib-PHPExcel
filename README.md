@@ -14,3 +14,8 @@ Create component from ```YiiMan\\Excel\Excel``` class
     ]  
 ];
 ```
+
+```php
+Yii::$app->excel->loadFile($excelFilePath);
+Yii::$app->excel->loadFile($excelFilePath);
+```
