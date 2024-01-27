@@ -18,10 +18,15 @@ class Excel
     protected $excel;
     private $titles = [];
     private $Globalstyles = [];
-    private $writer;
+
     private $temp_path='';
 
     private $temp_file='';
+
+    public function writer($type='Xlsx')
+    {
+        return IOFactory::createWriter($this->excel, IOFactory::WRITER_XLSX);
+    }
 
     public function __construct()
     {
@@ -31,7 +36,7 @@ class Excel
         ini_set('max_execution_time', 0);
         $this->temp_path=sys_get_temp_dir();
         $this->excel = new Spreadsheet();
-        $this->writer = IOFactory::createWriter($this->excel, IOFactory::WRITER_XLSX);
+
         $this->excel->getProperties()->setCreator("Me")->setLastModifiedBy(
             "Me"
         )->setTitle(
@@ -102,7 +107,7 @@ class Excel
      * @param $coordinate
      * @return $this
      */
-    public function freezeFirstRow($coordinate='A'):self
+    public function freezeFirstRow($coordinate='A1'):self
     {
         $this->excel->getActiveSheet()->freezePane($coordinate);
         return $this;
@@ -528,7 +533,7 @@ class Excel
      */
     public function write_and_get_file_path():string
     {
-        $this->writer->save(
+        $this->writer()->save(
             $this->temp_file_path(). '.xls'
         );
         return $this->temp_file_path(). '.xls';
@@ -546,7 +551,7 @@ class Excel
         
         $this->excel->getActiveSheet()->setTitle($title);
 //										PHPExcel_Settings::setZipClass(PHPExcel_Settings::PCLZIP);
-        $this->writer->save(
+        $this->writer()->save(
             $this->temp_file_path(). '.xls'
         );
 
