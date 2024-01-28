@@ -453,6 +453,18 @@ class Excel
     }
 
     /**
+     * set cell fill color in hex(rgb) mode
+     * @param int $row_number
+     * @param string $column_name like B(cellCoordinate)
+     * @param string $color like FF000000 ,You can use Color::Color_constants
+     * @return self
+     */
+    public function setRowColor(int $row_number, string $column_name, string $color): self
+    {
+        $this->excel->getActiveSheet()->getStyle('A' . $row_number . ':'.$column_name . $row_number)->applyFromArray(['fill' => ['color' => ['argb' => $color], 'fillType' => Fill::FILL_SOLID]]);
+        return $this;
+    }
+    /**
      * this function will hide array of columns
      * @param array $columns_names
      * @return self
