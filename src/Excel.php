@@ -448,7 +448,7 @@ class Excel
     public function setFillColor(int $row_number, int $column_number, string $color): self
     {
 
-        $this->excel->getActiveSheet()->getStyle($this->cellNames($row_number, $column_number))->applyFromArray(['fill' => ['color' => ['rgb' => $color], 'type' => Fill::FILL_SOLID]]);
+        $this->excel->getActiveSheet()->getStyle($this->cellNames($row_number, $column_number))->applyFromArray(['fill' => ['color' => ['rgb' => $color], 'fillType' => Fill::FILL_SOLID]]);
         return $this;
     }
 
